@@ -9,7 +9,7 @@ let
     sha256 = "sha256-oDd5yG3zMjB19eeWyyzlAp8A7Ihp7uP9+4l6/jbG0AI=";
   };
   model = largeModel;
-  whisperWithCuda = (import (builtins.getFlake "github:matthewcroughan/nixpkgs/79eec243144d6ec528f4b8f492fbd47684cd16bd") { system = "x86_64-linux"; config.allowUnfree = true; }).openai-whisper-cpp;
+  whisperWithCuda = (import (builtins.getFlake "github:matthewcroughan/nixpkgs/7cda9ab9d55e99e69d9e1d0728dd7f969c5e13fa") { system = "x86_64-linux"; config.allowUnfree = true; }).openai-whisper-cpp;
 in
 writeShellScriptBin "speak-to-me-whisper" ''
   ${whisperWithCuda}/bin/whisper-cpp-stream -m ${model} "$@" | ${python3}/bin/python ${./filter.py}
