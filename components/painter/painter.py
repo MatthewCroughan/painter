@@ -34,17 +34,18 @@ for line in sys.stdin:
     print("PAINTER::PROMPT: ", prompt)
     print("------")
     print()
+    # using "laura" to match spoken word, instead of "lora"
     if (prompt == "" or prompt.isspace() == True):
         pass
-    elif "christmas" in prompt.lower() and "paper" in prompt.lower() and "lora" in prompt.lower():
-        print("--- using both paper and chritmas loras ")
+    elif "christmas" in prompt.lower() and "paper" in prompt.lower() and "laura" in prompt.lower():
+        print("--- using both paper and christmas loras ")
         image = base_loaded(prompt="papercut ral-chrcrts "+prompt , num_inference_steps=4, guidance_scale=1.0, width=768, height=768,).images[0]
         metadata.add_text("Style", "papercut_and_christmas_critters_loras")
-    elif "christmas" in prompt.lower() and "lora" in prompt.lower():
+    elif "christmas" in prompt.lower() and "laura" in prompt.lower():
         print("--- using christmas lora")
         image = base_loaded(prompt="ral-chrcrts "+prompt , num_inference_steps=4, guidance_scale=1.0, width=768, height=768,).images[0]
         metadata.add_text("Style", "christmas_critters_lora")
-    elif "paper" in prompt.lower() and "lora" in prompt.lower():
+    elif "paper" in prompt.lower() and "laura" in prompt.lower():
         print("--- using paper lora")
         image = base_loaded(prompt="papercut "+prompt , num_inference_steps=4, guidance_scale=1.0, width=768, height=768,).images[0]
         metadata.add_text("Style", "papercut_lora")

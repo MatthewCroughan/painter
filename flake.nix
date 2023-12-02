@@ -17,6 +17,12 @@
           speak-to-me = import ./components/speak-to-me;
           speak-to-me-whisper = pkgs.callPackage ./components/speak-to-me-whisper {};
         };
+        devShells.default = pkgs.mkShell {
+          buildInputs = [
+            config.packages.painter
+            config.packages.speak-to-me-whisper
+          ];
+        };
       };
       flake = {
       };
