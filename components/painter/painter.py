@@ -1,31 +1,23 @@
-from PIL import Image
+from PIL import Image, PngImagePlugin
 import sys
 import time
-import random
 import torch
 import os
-from diffusers import DiffusionPipeline
+from diffusers import AutoPipelineForText2Image
 
-repo_id = os.getenv("PAINTER_MODEL_PATH")
-custom_pipeline = os.getenv("PAINTER_PIPELINE_PATH")
-mask_image_path = os.getenv("PAINTER_MASK_IMAGE_PATH")
+turbo_id = os.getenv("PAINTER_MODEL_PATH")
+paper_lora_id = os.getenv("PAINTER_PAPERCUT_MODEL_PATH")
+christmas_lora_id = os.getenv("PAINTER_CHRISTMAS_MODEL_PATH")
 
-pipe = DiffusionPipeline.from_pretrained(repo_id, custom_pipeline=custom_pipeline, torch_dtype=torch.float16, revision="fp16" )
+base = AutoPipelineForText2Image.from_pretrained(turbo_id, torch_dtype=torch.float16, variant="fp16", use_safetensors=True)
+base.to("cuda")
 
+base_loaded = AutoPipelineForText2Image.from_pretrained(turbo_id, torch_dtype=torch.float16, variant="fp16", use_safetensors=True)
+base_loaded.to("cuda")
+base_loaded.load_lora_weights(paper_lora_id)
+base_loaded.load_lora_weights(christmas_lora_id)
 
-pipe.to("cuda")
-#pipe.enable_attention_slicing()
-#this slows it down but frees up vram
-
-
-
-addition_list = [" fantasy forest landscape, golden vector elements, fantasy magic, dark light night, intricate, elegant, sharp focus, illustration, highly detailed, digital painting, concept art, matte, art by WLOP and Artgerm and Albert Bierstadt, masterpiece", " centered, octane render, unreal engine, photograph, fairytale style, old illustration, highly detailed, award winning, highlights", "dysney animation, intricate, highly detailed, sharp focus, digital art, paintinng, concept art" ,"magestic intricate highly detailed sharp focus phptography award winning photojournalism golden vector elements, realistic faces", "cosmic colorful contarst intrigue realistic faces characters detailed quality intricate", "2d, detailed, intricate colorful,  masterpiece, best quality, anime, cute face, highly detailed background, perfect lighting"]
-
-negative = " deformed"
-
-
-init_image = Image.open(r"{}".format(mask_image_path))
-mask_image = Image.open(r"{}".format(mask_image_path))
+#init_image = Image.open(r"{}".format(mask_image_path))
 count = 0
 
 print()
@@ -36,22 +28,34 @@ print()
 
 for line in sys.stdin:
     prompt = line.rstrip()
-    if (count%6 == 0):
-        addition = random.choice(addition_list)
-        print()
-        print("------")
-        print("PAINTER::PROMPT: ", prompt)
-        print("------")
-        print()
-        image = pipe.text2img(prompt+addition, negative_prompt=negative).images[0]
+    metadata = PngImagePlugin.PngInfo()
+    print()
+    print("------")
+    print("PAINTER::PROMPT: ", prompt)
+    print("------")
+    print()
+    if (prompt == "" or prompt.isspace() == True):
+        pass
+    elif "christmas" in prompt.lower() and "paper" in prompt.lower() and "lora" in prompt.lower():
+        print("--- using both paper and chritmas loras ")
+        image = base_loaded(prompt="papercut ral-chrcrts "+prompt , num_inference_steps=4, guidance_scale=1.0, width=768, height=768,).images[0]
+        metadata.add_text("Style", "papercut_and_christmas_critters_loras")
+    elif "christmas" in prompt.lower() and "lora" in prompt.lower():
+        print("--- using christmas lora")
+        image = base_loaded(prompt="ral-chrcrts "+prompt , num_inference_steps=4, guidance_scale=1.0, width=768, height=768,).images[0]
+        metadata.add_text("Style", "christmas_critters_lora")
+    elif "paper" in prompt.lower() and "lora" in prompt.lower():
+        print("--- using paper lora")
+        image = base_loaded(prompt="papercut "+prompt , num_inference_steps=4, guidance_scale=1.0, width=768, height=768,).images[0]
+        metadata.add_text("Style", "papercut_lora")
     else:
-        print()
-        print("------")
-        print("PAINTER::PROMPT: ", prompt)
-        print("------")
-        print()
-        image = pipe.inpaint(prompt+addition, image=init_image, mask_image=mask_image, negative_prompt=negative ).images[0]
+        print("---normal")
+        image = base(prompt=prompt , num_inference_steps=4, guidance_scale=1.0, width=768, height=768,).images[0]
+        metadata.add_text("Style", "normal")
     image.save("out.png")
-    image.save(f"./gen/output-{prompt[:30]}-{int(time.time())}.png")
-    init_image = image
-    count = count+1
+
+    metadata.add_text("Prompt", prompt)
+    metadata.add_text("Model", "sdxl-turbo")
+    image.save(f"./gen/{int(time.time())}.png", pnginfo=metadata)
+#    init_image = image
+#    count = count+1

@@ -11,8 +11,8 @@
         ({ config, pkgs, ... }:
         {
           environment.systemPackages = [
-            (import ../components/painter)
-            (import ../components/speak-to-me)
+            self.packages.${system}.painter
+            self.packages.${system}.speak-to-me-whisper
             pkgs.pqiv
           ];
         })
