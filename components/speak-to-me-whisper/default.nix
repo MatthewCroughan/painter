@@ -8,7 +8,7 @@ let
     url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin";
     sha256 = "sha256-oDd5yG3zMjB19eeWyyzlAp8A7Ihp7uP9+4l6/jbG0AI=";
   };
-  model = largeModel;
+  model = mediumModel;
   whisperWithCuda = (import (builtins.getFlake "github:matthewcroughan/nixpkgs/7cda9ab9d55e99e69d9e1d0728dd7f969c5e13fa") { system = "x86_64-linux"; config.allowUnfree = true; }).openai-whisper-cpp;
 in
 writeShellScriptBin "speak-to-me-whisper" ''
