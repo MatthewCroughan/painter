@@ -68,6 +68,8 @@ in pkgs.writeShellScriptBin "painter" ''
   export PAINTER_PAPERCUT_MODEL_PATH=${builtins.trace papercut-lora.outPath papercut-lora}
   export PAINTER_CHRISTMAS_MODEL_PATH=${builtins.trace christmas-lora.outPath christmas-lora}
   mkdir gen
+  ${pkgs.imagemagick}/bin/convert -size 123x456 xc:white out.png
+  ${pkgs.pqiv}/bin/pqiv -t -s -F --fade-duration=1 -d 1 out.png "$@"
   ${myPython}/bin/python ${./painter.py}
 ''
 
