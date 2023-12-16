@@ -29,23 +29,48 @@ let
           omegaconf
         ];
       };
+      compel = self.buildPythonPackage rec {
+        pname = "compel";
+        version = "2.0.2";
+        pyproject = true;
+        src = self.pkgs.fetchFromGitHub {
+          owner = "damian0815";
+          repo = "compel";
+          rev = "v${version}";
+          hash = "sha256-OHldDlHtxSs112rmy/DsZPV6TIhsmfAzcxH2rjJ9cR4=";
+        };
+        nativeBuildInputs = with self; [
+          setuptools
+          wheel
+        ];
+        propagatedBuildInputs = with self; [
+          diffusers
+          pyparsing
+          torch-bin
+          (transformers.override {torch = self.torch-bin; })
+        ];
+      
+        pythonImportsCheck = [ "compel" ];
+      }; 
+
     });
   };
   myPython = myOverridenPython.withPackages (p: with p; [
     diffusers
     (transformers.override { torch = p.torch-bin; })
     (accelerate.override { torch = p.torch-bin; })
+    (compel.override { torch = p.torch-bin; })
   ]);
-  papercut-lora = import <nix/fetchurl.nix> {
-    name = "papercut.safetensors";
-    url = "https://civitai.com/api/download/models/133503";
-    hash = "sha256-mPFynYWOe/cZKDeX5FZhM3zpFZQbgyYAJuFX2UljxAI=";
-  };
-  christmas-lora = import <nix/fetchurl.nix> {
-    name = "christmas-critters.safetensors";
-    url = "https://civitai.com/api/download/models/232800";
-    hash = "sha256-D69tY5XBQvj2BiMQYBUkmAbnlcB8y9R0Z0v3rz/O5eg=";
-  };
+#  papercut-lora = import <nix/fetchurl.nix> {
+#    name = "papercut.safetensors";
+#    url = "https://civitai.com/api/download/models/133503";
+#    hash = "sha256-mPFynYWOe/cZKDeX5FZhM3zpFZQbgyYAJuFX2UljxAI=";
+#  };
+#  christmas-lora = import <nix/fetchurl.nix> {
+#    name = "christmas-critters.safetensors";
+#    url = "https://civitai.com/api/download/models/232800";
+#    hash = "sha256-D69tY5XBQvj2BiMQYBUkmAbnlcB8y9R0Z0v3rz/O5eg=";
+#  };
   sdxl-turbo = pkgs.fetchgit {
     url = "https://huggingface.co/stabilityai/sdxl-turbo.git";
     branchName = "main";
@@ -65,8 +90,6 @@ let
 
 in pkgs.writeShellScriptBin "painter" ''
   export PAINTER_MODEL_PATH=${builtins.trace sdxl-turbo.outPath sdxl-turbo}
-  export PAINTER_PAPERCUT_MODEL_PATH=${builtins.trace papercut-lora.outPath papercut-lora}
-  export PAINTER_CHRISTMAS_MODEL_PATH=${builtins.trace christmas-lora.outPath christmas-lora}
   mkdir gen
   ${pkgs.imagemagick}/bin/convert -size 123x456 xc:white out.png
   ${pkgs.pqiv}/bin/pqiv -t -s -F --fade-duration=1 -d 1 out.png &
